@@ -289,19 +289,24 @@
 
     /* ===== Capsule / Deck ===== */
     /* Default: the vertical capsule OUTLINE — transparent, thin silver stroke, crisp */
-    .lb-deck { box-sizing: border-box; display: flex; flex-direction: column; align-items: center;
-      justify-content: center; gap: 0; width: var(--capsule-width); height: var(--capsule-height);
+    .lb-deck { position: relative; box-sizing: border-box; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 0;
+      width: var(--capsule-width); height: var(--capsule-height);
       background: transparent; border: var(--capsule-border) solid var(--capsule-color);
       border-radius: 9999px; cursor: pointer; user-select: none;
       transform-origin: center center; will-change: transform;
       transition: transform .55s cubic-bezier(.16,1,.3,1), border-color .3s ease,
         width .42s cubic-bezier(.2,1,.25,1), height .42s cubic-bezier(.2,1,.25,1),
         gap .42s cubic-bezier(.2,1,.25,1), border-width .3s ease; }
+    /* Invisible hit-area around the capsule so hover triggers reliably (no flicker).
+       Extends the pointer target without changing the visible outline. */
+    .lb-deck::before { content: ""; position: absolute; inset: -12px -14px; border-radius: 9999px; }
     /* Resting capsule fill: 50%-transparent grey (cleared when expanded) */
     .lb-deck:not(:hover):not(.pinned) { background: rgba(132,132,140,.5); }
-    /* Hover / pinned: expand into the button deck (container goes invisible, buttons separate) */
-    .lb-deck:hover, .lb-deck.pinned { width: 56px; height: auto; max-height: 220px; gap: 10px;
-      border-color: transparent; border-width: 0; border-radius: 0; cursor: grab; }
+    /* Hover / pinned: expand into the button deck (container goes invisible, buttons separate).
+       Fixed height (not auto) so the box never collapses mid-transition and drops :hover. */
+    .lb-deck:hover, .lb-deck.pinned { width: 56px; height: 152px; gap: 10px;
+      border-color: transparent; border-width: 0; border-radius: 18px; cursor: grab; }
     .lb-deck:not(:hover):not(.pinned) .lb-seg { height: 0; width: 0; opacity: 0; transform: scale(.3); pointer-events: none; }
     /* Keep the capsule while dragging, even though the pointer is over it */
     .lb-deck.dragging { width: var(--capsule-width) !important; height: var(--capsule-height) !important;
