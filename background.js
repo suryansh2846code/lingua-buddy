@@ -2,7 +2,7 @@
 // Handles all Groq API calls (translate + ask) on behalf of the content script.
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const DEFAULT_MODEL = "llama-3.3-70b-versatile";
+const DEFAULT_MODEL = "openai/gpt-oss-120b";
 
 // Optional personal fallback key. Leave empty and set your key in the Settings
 // page (stored in chrome.storage.local) — never commit a real key here.
