@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Lingua Buddy",
+  "version": "1.0.0",
+  "description": "A floating bubble that translates selected text or answers quick questions using Groq AI.",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["https://api.groq.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Lingua Buddy",
+    "default_popup": "popup.html"
+  },
+  "options_page": "options.html",
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
