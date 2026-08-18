@@ -13,7 +13,7 @@
     ["French", "FR"], ["German", "DE"], ["Japanese", "JA"], ["Chinese", "ZH"], ["Arabic", "AR"],
   ];
   const MAX_HISTORY = 5;
-  const MAX_CLIP = 10;
+  const MAX_CLIP = 20;
 
   let host, root, deck, menu, clipPanel, result, resultText, langLabel, askInput;
   let currentLang = "English";
@@ -213,12 +213,12 @@
     const clearBtn = el("button", { class: "lb-mini", text: "Clear", onClick: () => { clip = []; chrome.storage.local.set({ lb_clipboard: clip }); renderClip(); } });
     const x = el("button", { class: "lb-mini lb-x", text: "✕", onClick: hideClip });
     clipPanel.appendChild(el("div", { class: "lb-pop-head lb-clip-head" }, [el("span", { text: `Last ${MAX_CLIP}` }), el("span", { class: "lb-clip-actions" }, [clearBtn, x])]));
-    if (!clip.length) { clipPanel.appendChild(el("div", { class: "lb-clip-empty", text: "Copy something, translate, or ask — it shows up here." })); return; }
+    if (!clip.length) { clipPanel.appendChild(el("div", { class: "lb-clip-empty", text: "Copy any text (Cmd/Ctrl+C) and it appears here." })); return; }
     clip.forEach((item) => {
       const c = el("button", { class: "lb-mini", text: "Copy" });
       c.addEventListener("click", () => copyText(item.text, c));
       clipPanel.appendChild(el("div", { class: "lb-clip-item" }, [
-        el("div", { class: "lb-clip-info" }, [el("div", { class: "lb-clip-label", text: item.label }), el("div", { class: "lb-clip-text", text: item.text })]),
+        el("div", { class: "lb-clip-info" }, [el("div", { class: "lb-clip-text", text: item.text })]),
         c,
       ]));
     });
@@ -235,7 +235,7 @@
     if (!sel) { showResult("Select some text on the page, then tap Translate. Or just ask below 👇", false); setTimeout(() => askInput.focus(), 60); return; }
     showResult("…", true);
     chrome.runtime.sendMessage({ type: "translate", text: sel, targetLang: currentLang }, (resp) => {
-      if (handled(resp)) saveClip(`🌐 ${codeOf(currentLang)} · ${snippet(sel)}`, resp.text);
+      handled(resp);
     });
   }
   function onAsk() {
@@ -250,7 +250,6 @@
         history.push({ role: "assistant", content: resp.text });
         history = history.slice(-MAX_HISTORY);
         chrome.storage.local.set({ lb_history: history });
-        saveClip(`💬 ${snippet(q)}`, resp.text);
       }
     });
   }
