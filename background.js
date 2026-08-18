@@ -25,7 +25,10 @@ async function callGroq(messages) {
       model: groqModel || DEFAULT_MODEL,
       messages,
       temperature: 0.2,
-      max_tokens: 1024,
+      max_tokens: 1200,
+      // gpt-oss models are reasoning models; keep reasoning minimal so the actual
+      // answer isn't starved of tokens (was causing empty translations).
+      reasoning_effort: "low",
     }),
   });
 
