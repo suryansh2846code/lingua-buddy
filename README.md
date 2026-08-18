@@ -51,3 +51,18 @@ Default model is `openai/gpt-oss-120b` (change it in **Settings**). Requests use
 
 No API key is committed to this repository. Provide your own via **Settings**;
 it never leaves your browser. Never hardcode a key in `background.js`.
+
+## Contributing
+
+Issues and pull requests are welcome. It's a plain vanilla-JS Manifest V3
+extension — no build step and no dependencies:
+
+1. Clone the repo and load it unpacked (see **Setup**).
+2. Edit the source; reload the extension at `chrome://extensions` to test.
+3. Keep changes focused and run `node -c` on any JS you touch.
+
+Please don't commit API keys or other secrets.
+
+## License
+
+[MIT](LICENSE) © 2026 Suryansh Singh
