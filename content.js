@@ -324,13 +324,12 @@
     .lb-ico { width: 18px; height: 18px; display: block; }
 
     /* Language (top) — small pill with code + arrow */
-    .lb-lang { gap: 2px; height: 32px; padding: 0 9px; border-radius: 999px; }
-    /* Language code is hidden by default; it reveals only when the button is hovered */
-    .lb-lang-code { font-size: 12px; font-weight: 700; letter-spacing: .02em; white-space: nowrap;
-      max-width: 0; opacity: 0; overflow: hidden;
-      transition: max-width .25s cubic-bezier(.2,1,.25,1), opacity .2s ease; }
-    .lb-lang:hover .lb-lang-code { max-width: 36px; opacity: 1; }
-    .lb-arrow { width: 13px; height: 13px; opacity: .65; display: block; transition: transform .3s ease; }
+    .lb-lang { gap: 3px; height: 32px; padding: 0 11px; border-radius: 999px; }
+    .lb-lang-code { font-size: 12px; font-weight: 700; letter-spacing: .02em; }
+    /* Arrow is hidden by default; it reveals only when the language button is hovered (or the menu is open) */
+    .lb-arrow { width: 13px; height: 13px; display: block; max-width: 0; opacity: 0; overflow: hidden;
+      transition: max-width .25s cubic-bezier(.2,1,.25,1), opacity .2s ease, transform .3s ease; }
+    .lb-lang:hover .lb-arrow, .lb-lang.open .lb-arrow { max-width: 13px; opacity: .7; }
     .lb-lang.open .lb-arrow { transform: rotate(180deg); }
     /* Translate (middle) — the big circle */
     .lb-trans { width: 48px; height: 48px; border-radius: 50%; }
