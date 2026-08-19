@@ -76,10 +76,11 @@
     root = host.attachShadow({ mode: "open" });
 
     // Deck segments
+    const tip = (t) => el("span", { class: "lb-seg-tip", text: t });
     langLabel = el("span", { class: "lb-lang-code", text: codeOf(currentLang) });
-    const langBtn = el("button", { class: "lb-seg lb-lang", title: "Target language", onClick: (e) => { e.stopPropagation(); toggleMenu(); } }, [langLabel, el("span", { class: "lb-arrow" }, iChevron())]);
-    const transBtn = el("button", { class: "lb-seg lb-trans", title: "Translate selection", onClick: (e) => { e.stopPropagation(); onTranslate(); } }, el("span", { class: "lb-ico" }, iGlobe()));
-    const clipBtn = el("button", { class: "lb-seg lb-clip-btn", title: "Clipboard — last 10", onClick: (e) => { e.stopPropagation(); toggleClip(); } }, el("span", { class: "lb-ico" }, iClip()));
+    const langBtn = el("button", { class: "lb-seg lb-lang", title: "Target language", onClick: (e) => { e.stopPropagation(); toggleMenu(); } }, [tip("Change language"), langLabel, el("span", { class: "lb-arrow" }, iChevron())]);
+    const transBtn = el("button", { class: "lb-seg lb-trans", title: "Translate selection", onClick: (e) => { e.stopPropagation(); onTranslate(); } }, [tip("Translate"), el("span", { class: "lb-ico" }, iGlobe())]);
+    const clipBtn = el("button", { class: "lb-seg lb-clip-btn", title: "Clipboard", onClick: (e) => { e.stopPropagation(); toggleClip(); } }, [tip("Clipboard"), el("span", { class: "lb-ico" }, iClip())]);
     // Vertical stack: language (top) · translate (middle, larger) · clipboard (bottom)
     deck = el("div", { class: "lb-deck", id: "deck" }, [langBtn, transBtn, clipBtn]);
 
@@ -313,8 +314,17 @@
       border-radius: 9999px !important; background: rgba(132,132,140,.5) !important; cursor: grabbing; }
     .lb-deck.dragging .lb-seg { height: 0 !important; width: 0 !important; opacity: 0 !important; pointer-events: none; }
 
+    /* Per-button label — appears to the left only when that button is hovered */
+    .lb-seg-tip { position: absolute; right: calc(100% + 10px); top: 50%; white-space: nowrap;
+      background: rgba(16,16,20,.96); border: 1px solid rgba(255,255,255,.1); color: #f0eff6;
+      font-size: 12px; font-weight: 500; padding: 5px 10px; border-radius: 9px;
+      box-shadow: 0 5px 16px rgba(0,0,0,.45); pointer-events: none; opacity: 0;
+      transform: translateY(-50%) translateX(6px);
+      transition: opacity .2s ease, transform .25s cubic-bezier(.2,1,.25,1); }
+    .lb-seg:hover .lb-seg-tip { opacity: 1; transform: translateY(-50%) translateX(0); }
+
     /* Each button is its own closed, separated shape */
-    .lb-seg { display: flex; align-items: center; justify-content: center; color: #f0eff6; cursor: pointer;
+    .lb-seg { position: relative; display: flex; align-items: center; justify-content: center; color: #f0eff6; cursor: pointer;
       background: rgba(18,18,22,.92); border: 1px solid rgba(255,255,255,.10); flex: none;
       box-shadow: 0 5px 16px rgba(0,0,0,.42);
       backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
