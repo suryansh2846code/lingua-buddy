@@ -207,20 +207,13 @@
       refreshPin();
     });
   }
-  function snippet(s) { s = (s || "").replace(/\s+/g, " ").trim(); return s.length > 42 ? s.slice(0, 42) + "…" : s; }
-  function saveClip(label, text) {
-    text = (text || "").trim();
-    if (!text) return;
-    // Storage-authoritative read-modify-write so concurrent tabs never clobber
-    // each other. Move-to-top dedupe: re-copying existing text just bumps it up.
+  // Snippets are added/managed from the extension popup; here we just remove one.
+  function deleteClip(text) {
     chrome.storage.local.get("lb_clipboard", (d) => {
-      let list = Array.isArray(d.lb_clipboard) ? d.lb_clipboard : [];
-      list = list.filter((it) => it && it.text !== text);
-      list.unshift({ label, text, ts: Date.now() });
-      list = list.slice(0, MAX_CLIP);
-      clip = list;
-      chrome.storage.local.set({ lb_clipboard: list });
-      if (clipPanel && !clipPanel.hidden) renderClip();
+      const list = (Array.isArray(d.lb_clipboard) ? d.lb_clipboard : []).filter((it) => it && it.text !== text);
+      clip = list.slice(0, MAX_CLIP);
+      chrome.storage.local.set({ lb_clipboard: clip });
+      renderClip();
     });
   }
   function copyText(text, btn) {
@@ -242,14 +235,15 @@
     } });
     const clearBtn = el("button", { class: "lb-mini", text: "Clear", onClick: () => { clip = []; chrome.storage.local.set({ lb_clipboard: clip }); renderClip(); } });
     const x = el("button", { class: "lb-mini lb-x", text: "✕", onClick: hideClip });
-    clipPanel.appendChild(el("div", { class: "lb-pop-head lb-clip-head" }, [el("span", { text: `Last ${MAX_CLIP}` }), el("span", { class: "lb-clip-actions" }, [refreshBtn, clearBtn, x])]));
-    if (!clip.length) { clipPanel.appendChild(el("div", { class: "lb-clip-empty", text: "Copy any text (Cmd/Ctrl+C) and it appears here." })); return; }
+    clipPanel.appendChild(el("div", { class: "lb-pop-head lb-clip-head" }, [el("span", { text: "Saved snippets" }), el("span", { class: "lb-clip-actions" }, [refreshBtn, clearBtn, x])]));
+    if (!clip.length) { clipPanel.appendChild(el("div", { class: "lb-clip-empty", text: "No saved snippets. Add them from the extension icon (🗒️)." })); return; }
     clip.forEach((item) => {
       const c = el("button", { class: "lb-mini", text: "Copy" });
       c.addEventListener("click", () => copyText(item.text, c));
+      const del = el("button", { class: "lb-mini lb-x", title: "Remove", text: "✕", onClick: () => deleteClip(item.text) });
       clipPanel.appendChild(el("div", { class: "lb-clip-item" }, [
         el("div", { class: "lb-clip-info" }, [el("div", { class: "lb-clip-text", text: item.text })]),
-        c,
+        el("div", { class: "lb-clip-item-acts" }, [c, del]),
       ]));
     });
   }
@@ -301,22 +295,6 @@
     if (menu && !menu.hidden) hideMenu();
     if (clipPanel && !clipPanel.hidden) hideClip();
   }, true);
-  document.addEventListener("copy", (e) => {
-    if (host && host.contains(document.activeElement)) return;
-    const fallback = getCopiedText(e); // capture synchronously, before selection can clear
-    // The real system clipboard is most reliable (covers inputs & contenteditable);
-    // fall back to the captured selection if reading it isn't permitted.
-    setTimeout(() => {
-      if (navigator.clipboard && navigator.clipboard.readText) {
-        navigator.clipboard.readText().then(
-          (t) => saveClip("📄 Copied", t && t.trim() ? t : fallback),
-          () => saveClip("📄 Copied", fallback)
-        );
-      } else {
-        saveClip("📄 Copied", fallback);
-      }
-    }, 0);
-  }, true);
 
   // Keep every tab in sync — clipboard, language and memory are shared via
   // chrome.storage, so react to changes made in other tabs instead of each tab
@@ -336,24 +314,6 @@
       if (langLabel) langLabel.textContent = codeOf(currentLang);
     }
   });
-
-  // Best-effort read of what the user just copied, from any source.
-  function getCopiedText(e) {
-    const ae = document.activeElement;
-    try {
-      if (ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA") && ae.selectionStart != null) {
-        const v = String(ae.value).slice(ae.selectionStart, ae.selectionEnd);
-        if (v.trim()) return v;
-      }
-    } catch (_) {}
-    const sel = window.getSelection ? window.getSelection().toString() : "";
-    if (sel.trim()) return sel;
-    try {
-      const c = e && e.clipboardData && e.clipboardData.getData("text/plain");
-      if (c && c.trim()) return c;
-    } catch (_) {}
-    return "";
-  }
 
   // ---- Styles ---------------------------------------------------------------
   const CSS = `
@@ -452,6 +412,7 @@
       transition: background .15s ease; animation: lb-item-in .28s cubic-bezier(.2,1,.25,1) both; }
     .lb-clip-item:hover { background: rgba(255,255,255,.05); }
     @keyframes lb-item-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+    .lb-clip-item-acts { display: flex; flex-direction: column; gap: 4px; flex: none; }
     .lb-clip-info { flex: 1; min-width: 0; }
     .lb-clip-label { font-size: 10.5px; color: #9a90ff; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .lb-clip-text { font-size: 13px; line-height: 1.35; color: #e9e9ef; word-break: break-word;

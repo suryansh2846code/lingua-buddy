@@ -13,8 +13,8 @@ the capsule morphs into a unified bar with the result. Powered by the
 - **Translate a selection** into any of 9 languages; the deck morphs into a
   result bar with a **Copy** button and a **follow-up ask** input.
 - **Ask** quick questions with short rolling memory (last 5 messages).
-- **Clipboard** — your last 10 results (translations, answers, and anything you
-  copy with Cmd/Ctrl+C), each with one-click Copy.
+- **Clipboard** — a manual snippet store. Save text from the extension popup
+  (🗒️), then copy any snippet on any page from the capsule's clipboard.
 - **Works on locked-down sites** — CSP- and Trusted-Types-safe rendering.
 - Language, position, memory, and clipboard all persist across reloads.
 
@@ -32,7 +32,8 @@ the capsule morphs into a unified bar with the result. Powered by the
 2. Pick a target **language** (top), then **select text** and click the middle
    **Translate** button. The deck morphs into the result bar.
 3. Type in the **"Ask a follow-up…"** field to ask about the selection.
-4. Open the **clipboard** (bottom) for your last 10 results; **Copy** any one.
+4. Click the extension icon (🗒️) to **save snippets**; open the **clipboard**
+   (bottom of the capsule) on any page to **Copy** or remove them.
 5. **Drag** the capsule vertically to reposition it.
 
 ## Configuration
