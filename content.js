@@ -9,8 +9,9 @@
   window.__linguaBuddyLoaded = true;
 
   const LANGS = [
-    ["English", "EN"], ["Hindi", "HI"], ["Bengali", "BN"], ["Spanish", "ES"],
-    ["French", "FR"], ["German", "DE"], ["Japanese", "JA"], ["Chinese", "ZH"], ["Arabic", "AR"],
+    ["English", "EN"], ["Hindi", "HI"], ["Bengali", "BN"], ["Roman Bengali", "RBN"],
+    ["Spanish", "ES"], ["French", "FR"], ["German", "DE"], ["Japanese", "JA"],
+    ["Chinese", "ZH"], ["Arabic", "AR"],
   ];
   const MAX_HISTORY = 5;
   const MAX_CLIP = 20;

@@ -52,8 +52,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === "translate") {
     const sys =
       "You are a precise translation engine. Translate the user's text into " +
-      `${msg.targetLang}. Reply with ONLY the translation — no quotes, no notes, ` +
-      "no explanations. Preserve line breaks and tone.";
+      `${msg.targetLang}. If the target is a romanized / Latin-script form (e.g. ` +
+      '"Roman Bengali"), transliterate it phonetically using Latin/English letters ' +
+      "rather than the native script. Reply with ONLY the translation — no quotes, " +
+      "no notes, no explanations. Preserve line breaks and tone.";
     callGroq([
       { role: "system", content: sys },
       { role: "user", content: msg.text },
