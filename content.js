@@ -193,15 +193,33 @@
 
   // ---- Clipboard ------------------------------------------------------------
   function hideClip() { if (clipPanel) clipPanel.hidden = true; refreshPin(); }
-  function toggleClip() { if (clipPanel.hidden) { hideMenu(); renderClip(); clipPanel.hidden = false; } else clipPanel.hidden = true; refreshPin(); }
+  function toggleClip() {
+    if (!clipPanel.hidden) { clipPanel.hidden = true; refreshPin(); return; }
+    hideMenu();
+    // Always load the latest shared list from storage when opening, so every
+    // site/tab shows the same clipboard.
+    chrome.storage.local.get("lb_clipboard", (d) => {
+      clip = Array.isArray(d.lb_clipboard) ? d.lb_clipboard.slice(0, MAX_CLIP) : [];
+      renderClip();
+      clipPanel.hidden = false;
+      refreshPin();
+    });
+  }
   function snippet(s) { s = (s || "").replace(/\s+/g, " ").trim(); return s.length > 42 ? s.slice(0, 42) + "…" : s; }
   function saveClip(label, text) {
     text = (text || "").trim();
-    if (!text || (clip[0] && clip[0].text === text)) return;
-    clip.unshift({ label, text, ts: Date.now() });
-    clip = clip.slice(0, MAX_CLIP);
-    chrome.storage.local.set({ lb_clipboard: clip });
-    if (clipPanel && !clipPanel.hidden) renderClip();
+    if (!text) return;
+    // Storage-authoritative read-modify-write so concurrent tabs never clobber
+    // each other. Move-to-top dedupe: re-copying existing text just bumps it up.
+    chrome.storage.local.get("lb_clipboard", (d) => {
+      let list = Array.isArray(d.lb_clipboard) ? d.lb_clipboard : [];
+      list = list.filter((it) => it && it.text !== text);
+      list.unshift({ label, text, ts: Date.now() });
+      list = list.slice(0, MAX_CLIP);
+      clip = list;
+      chrome.storage.local.set({ lb_clipboard: list });
+      if (clipPanel && !clipPanel.hidden) renderClip();
+    });
   }
   function copyText(text, btn) {
     navigator.clipboard.writeText(text).then(
@@ -272,10 +290,59 @@
     if (menu && !menu.hidden) hideMenu();
     if (clipPanel && !clipPanel.hidden) hideClip();
   }, true);
-  document.addEventListener("copy", () => {
+  document.addEventListener("copy", (e) => {
     if (host && host.contains(document.activeElement)) return;
-    setTimeout(() => { const t = window.getSelection ? window.getSelection().toString().trim() : ""; if (t) saveClip("📄 Copied", t); }, 0);
+    const fallback = getCopiedText(e); // capture synchronously, before selection can clear
+    // The real system clipboard is most reliable (covers inputs & contenteditable);
+    // fall back to the captured selection if reading it isn't permitted.
+    setTimeout(() => {
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        navigator.clipboard.readText().then(
+          (t) => saveClip("📄 Copied", t && t.trim() ? t : fallback),
+          () => saveClip("📄 Copied", fallback)
+        );
+      } else {
+        saveClip("📄 Copied", fallback);
+      }
+    }, 0);
   }, true);
+
+  // Keep every tab in sync — clipboard, language and memory are shared via
+  // chrome.storage, so react to changes made in other tabs instead of each tab
+  // holding a stale copy that clobbers the others on the next write.
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== "local") return;
+    if (changes.lb_clipboard) {
+      const v = changes.lb_clipboard.newValue;
+      clip = Array.isArray(v) ? v.slice(0, MAX_CLIP) : [];
+      if (clipPanel && !clipPanel.hidden) renderClip();
+    }
+    if (changes.lb_history && Array.isArray(changes.lb_history.newValue)) {
+      history = changes.lb_history.newValue.slice(-MAX_HISTORY);
+    }
+    if (changes.lb_lang && changes.lb_lang.newValue && codeOf(changes.lb_lang.newValue) !== "?") {
+      currentLang = changes.lb_lang.newValue;
+      if (langLabel) langLabel.textContent = codeOf(currentLang);
+    }
+  });
+
+  // Best-effort read of what the user just copied, from any source.
+  function getCopiedText(e) {
+    const ae = document.activeElement;
+    try {
+      if (ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA") && ae.selectionStart != null) {
+        const v = String(ae.value).slice(ae.selectionStart, ae.selectionEnd);
+        if (v.trim()) return v;
+      }
+    } catch (_) {}
+    const sel = window.getSelection ? window.getSelection().toString() : "";
+    if (sel.trim()) return sel;
+    try {
+      const c = e && e.clipboardData && e.clipboardData.getData("text/plain");
+      if (c && c.trim()) return c;
+    } catch (_) {}
+    return "";
+  }
 
   // ---- Styles ---------------------------------------------------------------
   const CSS = `
