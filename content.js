@@ -91,11 +91,12 @@
     // Unified result bar (morph target)
     resultText = el("div", { class: "lb-result-text", text: "" });
     const copyBtn = el("button", { class: "lb-mini", title: "Copy", onClick: () => copyText(resultText.textContent, copyBtn) }, "Copy");
+    const gearBtn = el("button", { class: "lb-mini", title: "Settings (API key)", text: "⚙", onClick: () => chrome.runtime.sendMessage({ type: "openOptions" }) });
     const closeBtn = el("button", { class: "lb-mini lb-x", title: "Close", text: "✕", onClick: closeResult });
     askInput = el("input", { class: "lb-ask-input", type: "text", placeholder: "Ask a follow-up…", onKeydown: (e) => { if (e.key === "Enter") onAsk(); } });
     const sendBtn = el("button", { class: "lb-ask-send", title: "Ask", onClick: onAsk }, el("span", { class: "lb-ico" }, iSend()));
     result = el("div", { class: "lb-result", id: "result", hidden: "" }, [
-      el("div", { class: "lb-result-top" }, [resultText, copyBtn, closeBtn]),
+      el("div", { class: "lb-result-top" }, [resultText, copyBtn, gearBtn, closeBtn]),
       el("div", { class: "lb-ask-row" }, [askInput, sendBtn]),
     ]);
 
@@ -223,15 +224,24 @@
   }
   function copyText(text, btn) {
     navigator.clipboard.writeText(text).then(
-      () => { const o = btn.textContent; btn.textContent = "✓"; setTimeout(() => (btn.textContent = o), 1100); },
+      () => {
+        const o = btn.textContent;
+        btn.textContent = "✓";
+        btn.style.transform = "scale(1.18)";
+        setTimeout(() => { btn.style.transform = ""; }, 160);
+        setTimeout(() => (btn.textContent = o), 1100);
+      },
       () => (btn.textContent = "✕")
     );
   }
   function renderClip() {
     clear(clipPanel);
+    const refreshBtn = el("button", { class: "lb-mini", title: "Refresh from clipboard history", text: "⟳", onClick: () => {
+      chrome.storage.local.get("lb_clipboard", (d) => { clip = Array.isArray(d.lb_clipboard) ? d.lb_clipboard.slice(0, MAX_CLIP) : []; renderClip(); });
+    } });
     const clearBtn = el("button", { class: "lb-mini", text: "Clear", onClick: () => { clip = []; chrome.storage.local.set({ lb_clipboard: clip }); renderClip(); } });
     const x = el("button", { class: "lb-mini lb-x", text: "✕", onClick: hideClip });
-    clipPanel.appendChild(el("div", { class: "lb-pop-head lb-clip-head" }, [el("span", { text: `Last ${MAX_CLIP}` }), el("span", { class: "lb-clip-actions" }, [clearBtn, x])]));
+    clipPanel.appendChild(el("div", { class: "lb-pop-head lb-clip-head" }, [el("span", { text: `Last ${MAX_CLIP}` }), el("span", { class: "lb-clip-actions" }, [refreshBtn, clearBtn, x])]));
     if (!clip.length) { clipPanel.appendChild(el("div", { class: "lb-clip-empty", text: "Copy any text (Cmd/Ctrl+C) and it appears here." })); return; }
     clip.forEach((item) => {
       const c = el("button", { class: "lb-mini", text: "Copy" });
@@ -398,6 +408,7 @@
       transition: background .18s ease, height .35s cubic-bezier(.2,1,.25,1),
         width .35s cubic-bezier(.2,1,.25,1), opacity .3s ease, transform .35s cubic-bezier(.2,1,.25,1); }
     .lb-seg:hover { background: rgba(42,42,50,.95); }
+    .lb-deck:hover .lb-seg:active, .lb-deck.pinned .lb-seg:active { transform: scale(.9); }
     .lb-ico { width: 18px; height: 18px; display: block; }
 
     /* Language (top) — small pill with code + arrow */
@@ -435,15 +446,21 @@
     .lb-clip-head { position: sticky; top: -12px; background: #0a0a0d; z-index: 1; }
     .lb-clip-actions { display: flex; gap: 6px; }
     .lb-clip-empty { font-size: 12.5px; color: #85858f; padding: 10px 4px; }
-    .lb-clip-item { display: flex; gap: 8px; align-items: flex-start; padding: 9px 4px; border-top: 1px solid rgba(255,255,255,.06); }
+    .lb-clip-item { display: flex; gap: 8px; align-items: flex-start; padding: 9px 6px;
+      border-top: 1px solid rgba(255,255,255,.06); border-radius: 8px;
+      transition: background .15s ease; animation: lb-item-in .28s cubic-bezier(.2,1,.25,1) both; }
+    .lb-clip-item:hover { background: rgba(255,255,255,.05); }
+    @keyframes lb-item-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
     .lb-clip-info { flex: 1; min-width: 0; }
     .lb-clip-label { font-size: 10.5px; color: #9a90ff; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .lb-clip-text { font-size: 13px; line-height: 1.35; color: #e9e9ef; word-break: break-word;
       display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 
     .lb-mini { font-size: 12px; color: #cfcfe0; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
-      border-radius: 8px; padding: 5px 10px; flex: none; }
-    .lb-mini:hover { background: rgba(255,255,255,.14); color: #fff; }
+      border-radius: 8px; padding: 5px 10px; flex: none;
+      transition: background .15s ease, color .15s ease, transform .14s cubic-bezier(.2,1.4,.4,1); }
+    .lb-mini:hover { background: rgba(255,255,255,.14); color: #fff; transform: translateY(-1px); }
+    .lb-mini:active { transform: scale(.9); }
     .lb-x { padding: 5px 9px; }
 
     /* ===== Unified result bar (morph) ===== */
@@ -459,8 +476,10 @@
     .lb-ask-input { flex: 1; background: transparent; border: none; outline: none; color: #fff; font-size: 13.5px; padding: 4px 2px; }
     .lb-ask-input::placeholder { color: #74747f; }
     .lb-ask-send { width: 30px; height: 30px; border-radius: 50%; background: #fff; color: #0a0a0d;
-      display: flex; align-items: center; justify-content: center; flex: none; }
-    .lb-ask-send:hover { background: #d8d8e6; }
+      display: flex; align-items: center; justify-content: center; flex: none;
+      transition: background .15s ease, transform .14s cubic-bezier(.2,1.4,.4,1); }
+    .lb-ask-send:hover { background: #d8d8e6; transform: scale(1.08); }
+    .lb-ask-send:active { transform: scale(.9); }
     .lb-ask-send .lb-ico { width: 16px; height: 16px; }
 
     @media (prefers-reduced-motion: reduce) { * { transition-duration: .001ms !important; animation-duration: .001ms !important; } }
