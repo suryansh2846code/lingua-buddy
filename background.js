@@ -13,7 +13,7 @@ async function callGroq(messages) {
   const { groqApiKey, groqModel } = await chrome.storage.local.get(["groqApiKey", "groqModel"]);
   const key = groqApiKey || FALLBACK_API_KEY;
   if (!key) {
-    throw new Error("No Groq API key set. Click the extension icon → Options and paste your key.");
+    throw new Error("No API key set — open Settings (⚙) and paste a Groq key from console.groq.com/keys.");
   }
   const res = await fetch(GROQ_URL, {
     method: "POST",
@@ -81,6 +81,11 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       .then((out) => sendResponse({ ok: true, text: out }))
       .catch((e) => sendResponse({ ok: false, error: e.message }));
     return true; // async
+  }
+
+  if (msg.type === "openOptions") {
+    chrome.runtime.openOptionsPage();
+    return false;
   }
 
   return false;
